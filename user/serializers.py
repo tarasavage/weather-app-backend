@@ -7,7 +7,6 @@ class UserSerializer(serializers.ModelSerializer):
         model = get_user_model()
         fields = (
             "id",
-            "username",
             "email",
             "first_name",
             "last_name",
