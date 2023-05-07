@@ -5,6 +5,12 @@ from rest_framework.authtoken.models import Token
 
 
 class UserSerializer(serializers.ModelSerializer):
+    password2 = serializers.CharField(
+        label=_("Confirm Password"),
+        style={"input_type": "password"},
+        write_only=True,
+    )
+
     class Meta:
         model = get_user_model()
         fields = (
@@ -13,18 +19,33 @@ class UserSerializer(serializers.ModelSerializer):
             "first_name",
             "last_name",
             "password",
+            "password2",
             "is_staff",
         )
-        read_only_fields = ("id", "staff")
+        read_only_fields = ("id", "is_staff")
         extra_kwargs = {"password": {"write_only": True, "min_length": 5}}
+
+    def validate(self, attrs):
+        password1 = attrs.get("password")
+        password2 = attrs.get("password2")
+
+        if password1 and password2 and password1 != password2:
+            raise serializers.ValidationError(
+                _("Passwords do not match."),
+                code="password_mismatch"
+            )
+
+        return attrs
 
     def create(self, validated_data):
         """Create user with encrypted password"""
+        validated_data.pop("password2", None)
         return get_user_model().objects.create_user(**validated_data)
 
     def update(self, instance, validated_data):
         """Update user with correctly encrypted password"""
         password = validated_data.pop("password", None)
+        validated_data.pop("password2", None)
         user = super().update(instance, validated_data)
 
         if password:
