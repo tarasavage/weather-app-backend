@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "drf_spectacular",
     "user",
+    "wheater",
 ]
 
 AUTH_USER_MODEL = "user.User"
