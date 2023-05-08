@@ -41,7 +41,16 @@ class CurrentWeather(Weather):
 
 
 class HourlyWeather(Weather):
+    temp = models.FloatField()
+    feels_like = models.FloatField()
+    temp_min = models.FloatField()
+    temp_max = models.FloatField()
+    sea_level = models.FloatField()
+    ground_level = models.FloatField()
     pop = models.FloatField()
+    visibility = models.FloatField()
+    rain_1h = models.FloatField(null=True)
+    snow_1h = models.FloatField(null=True)
 
     def __str__(self):
         return f"Hourly weather for {self.city.name} at {self.dt}"
