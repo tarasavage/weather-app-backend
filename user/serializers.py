@@ -21,6 +21,7 @@ class UserSerializer(serializers.ModelSerializer):
             "password",
             "password2",
             "is_staff",
+            "favorite_cities",
         )
         read_only_fields = ("id", "is_staff")
         extra_kwargs = {"password": {"write_only": True, "min_length": 5}}
@@ -31,8 +32,7 @@ class UserSerializer(serializers.ModelSerializer):
 
         if password1 and password2 and password1 != password2:
             raise serializers.ValidationError(
-                _("Passwords do not match."),
-                code="password_mismatch"
+                _("Passwords do not match."), code="password_mismatch"
             )
 
         return attrs
