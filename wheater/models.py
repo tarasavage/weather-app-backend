@@ -21,9 +21,9 @@ class Weather(models.Model):
     wind_gust = models.FloatField(null=True)
     wind_deg = models.FloatField()
     weather_id = models.IntegerField()
-    weather_main = models.CharField(max_length=100)  # "Rain"
-    weather_description = models.CharField(max_length=100)  # "light rain"
-    weather_icon = models.CharField(max_length=50)  # "10n"
+    weather_main = models.CharField(max_length=100)
+    weather_description = models.CharField(max_length=100)
+    weather_icon = models.CharField(max_length=50)
 
     class Meta:
         abstract = True
