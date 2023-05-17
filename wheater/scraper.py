@@ -1,10 +1,9 @@
 from datetime import datetime
+from django.db import IntegrityError
 
 import requests
 
-from wheater.models import (
-    City, CurrentWeather, DailyWeather, HourlyWeather
-)
+from wheater.models import City, CurrentWeather, DailyWeather, HourlyWeather, Weather
 from django.shortcuts import get_object_or_404
 
 API_KEY = "5a1b11a7a00f6c06e792ed6bb1ee3cd2"
@@ -31,12 +30,22 @@ def get_response_from_api(url: str) -> dict | None:
             if response.status_code == 200:
                 return response.json()
             else:
-                print(f"Error: Request failed with status code "
-                      f"{response.status_code}")
+                print(
+                    f"Error: Request failed with status code " f"{response.status_code}"
+                )
     except requests.exceptions.RequestException as e:
         print(f"Error: {e}")
 
     return None
+
+
+def save_obj_to_db(obj: City | Weather) -> None:
+    try:
+        obj.save()
+    except IntegrityError as e:
+        print(f"IntegrityError occurred while saving object to the database: {e}")
+    except Exception as e:
+        print(f"Error occurred while saving object to the database: {e}")
 
 
 def create_city(coords_response: dict) -> City | None:
@@ -75,7 +84,7 @@ def scrape_city(city_name: str) -> City | None:
             city = create_city(coords_response)
 
             if city:
-                city.save()
+                save_obj_to_db(city)
                 return city
 
     except Exception as e:
@@ -92,9 +101,9 @@ def create_current_weather(city: City, response: dict) -> CurrentWeather:
 
     current_weather = CurrentWeather(
         city=city,
-        dt=datetime.utcfromtimestamp(
-            get_nested_value(response, ["dt"], 0)
-        ).strftime("%Y-%m-%d %H:%M:%S"),
+        dt=datetime.utcfromtimestamp(get_nested_value(response, ["dt"], 0)).strftime(
+            "%Y-%m-%d %H:%M:%S"
+        ),
         temp=get_nested_value(response, ["main", "temp"], 20.37),
         feels_like=get_nested_value(response, ["main", "feels_like"], 19.92),
         pressure=get_nested_value(response, ["main", "pressure"], 1016),
@@ -107,9 +116,7 @@ def create_current_weather(city: City, response: dict) -> CurrentWeather:
         rain_1h=get_nested_value(response, ["rain", "1h"]),
         snow_1h=get_nested_value(response, ["snow", "1h"]),
         weather_id=get_nested_value(response, ["weather", 0, "id"], 501),
-        weather_main=get_nested_value(
-            response, ["weather", 0, "main"], "Clouds"
-        ),
+        weather_main=get_nested_value(response, ["weather", 0, "main"], "Clouds"),
         weather_description=get_nested_value(
             response, ["weather", 0, "description"], "scattered clouds"
         ),
@@ -132,6 +139,7 @@ def scrape_current_weather(city_name: str) -> CurrentWeather | None:
         cur_weather_response = get_response_from_api(url)
 
         current_weather = create_current_weather(city, cur_weather_response)
+        save_obj_to_db(current_weather)
 
         return current_weather
     except Exception as e:
@@ -142,7 +150,7 @@ def scrape_current_weather(city_name: str) -> CurrentWeather | None:
 
 def sync_current_weather_with_api(city_name: str) -> None:
     cur_weather = scrape_current_weather(city_name)
-    cur_weather.save()
+    save_obj_to_db(cur_weather)
 
 
 def create_daily_weather(city: City, response: dict) -> DailyWeather:
@@ -158,9 +166,7 @@ def create_daily_weather(city: City, response: dict) -> DailyWeather:
         wind_deg=get_nested_value(response, ["deg"], 220),
         wind_gust=get_nested_value(response, ["gust"]),
         weather_id=get_nested_value(response, ["weather", 0, "id"], 501),
-        weather_main=get_nested_value(
-            response, ["weather", 0, "main"], "Clouds"
-        ),
+        weather_main=get_nested_value(response, ["weather", 0, "main"], "Clouds"),
         weather_description=get_nested_value(
             response, ["weather", 0, "description"], "scattered clouds"
         ),
@@ -176,9 +182,7 @@ def create_daily_weather(city: City, response: dict) -> DailyWeather:
         feels_like_morn=get_nested_value(response, ["feels_like", "morn"], 20),
         feels_like_day=get_nested_value(response, ["feels_like", "day"], 20),
         feels_like_eve=get_nested_value(response, ["feels_like", "eve"], 20),
-        feels_like_night=get_nested_value(
-            response, ["feels_like", "night"], 20
-        ),
+        feels_like_night=get_nested_value(response, ["feels_like", "night"], 20),
         pop=response.get("pop", 0.5),
         rain=response.get("rain", None),
         snow=response.get("snow", None),
@@ -204,6 +208,7 @@ def scrape_daily_weather(city_name: str) -> list[DailyWeather] | None:
 
         for day in data:
             daily_weather = create_daily_weather(city, day)
+            save_obj_to_db(daily_weather)
             forecast.append(daily_weather)
 
         return forecast
@@ -218,7 +223,7 @@ def sync_daily_weather_with_api(city_name: str) -> None:
     forecast = scrape_daily_weather(city_name)
 
     for day in forecast:
-        day.save()
+        save_obj_to_db(day)
 
 
 def create_hourly_weather(city: City, response: dict) -> HourlyWeather:
@@ -234,9 +239,7 @@ def create_hourly_weather(city: City, response: dict) -> HourlyWeather:
         wind_deg=get_nested_value(response, ["deg"], 220),
         wind_gust=get_nested_value(response, ["gust"]),
         weather_id=get_nested_value(response, ["weather", 0, "id"], 501),
-        weather_main=get_nested_value(
-            response, ["weather", 0, "main"], "Clouds"
-        ),
+        weather_main=get_nested_value(response, ["weather", 0, "main"], "Clouds"),
         weather_description=get_nested_value(
             response, ["weather", 0, "description"], "scattered clouds"
         ),
@@ -273,6 +276,7 @@ def scrape_hourly_weather(city_name: str) -> list[HourlyWeather] | None:
 
         for day in data:
             hourly_weather = create_hourly_weather(city, day)
+            save_obj_to_db(hourly_weather)
             forecast.append(hourly_weather)
 
         return forecast
@@ -287,4 +291,4 @@ def sync_hourly_weather_with_api(city_name: str) -> None:
     forecast = scrape_hourly_weather(city_name)
 
     for day in forecast:
-        day.save()
+        save_obj_to_db(day)

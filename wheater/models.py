@@ -2,7 +2,7 @@ from django.db import models
 
 
 class City(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, unique=True)
     lat = models.FloatField()
     lon = models.FloatField()
     country = models.CharField(max_length=50)
@@ -13,7 +13,7 @@ class City(models.Model):
 
 class Weather(models.Model):
     city = models.ForeignKey(City, on_delete=models.CASCADE)
-    dt = models.DateTimeField()
+    dt = models.DateTimeField(unique=True)
     pressure = models.FloatField()
     humidity = models.FloatField()
     clouds = models.FloatField()
