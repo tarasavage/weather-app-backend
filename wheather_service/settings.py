@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     "rest_framework",
     "drf_spectacular",
     "user",
+    "wheater",
+    "userinteraction",
 ]
 
 AUTH_USER_MODEL = "user.User"
@@ -143,8 +145,8 @@ REST_FRAMEWORK = {
 }
 
 SPECTACULAR_SETTINGS = {
-    "TITLE": "Wheather App API",
-    "DESCRIPTION": "Check the wheather forecast for your city",
+    "TITLE": "Weather App API",
+    "DESCRIPTION": "Check the weather forecast for your city",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "SWAGGER_UI_SETTINGS": {
