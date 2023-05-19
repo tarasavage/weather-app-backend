@@ -10,6 +10,7 @@ class UserSerializer(serializers.ModelSerializer):
         style={"input_type": "password"},
         write_only=True,
     )
+    notification = serializers.BooleanField(required=False)
 
     class Meta:
         model = get_user_model()
@@ -22,6 +23,7 @@ class UserSerializer(serializers.ModelSerializer):
             "password2",
             "is_staff",
             "favorite_cities",
+            "notification",
         )
         read_only_fields = ("id", "is_staff")
         extra_kwargs = {"password": {"write_only": True, "min_length": 5}}
@@ -40,7 +42,9 @@ class UserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         """Create user with encrypted password"""
         validated_data.pop("password2", None)
-        return get_user_model().objects.create_user(**validated_data)
+        user = get_user_model().objects.create_user(**validated_data)
+
+        return user
 
     def update(self, instance, validated_data):
         """Update user with correctly encrypted password"""

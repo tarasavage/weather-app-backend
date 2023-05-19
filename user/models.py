@@ -44,6 +44,7 @@ class User(AbstractUser):
     favorite_cities = models.ManyToManyField(
         City, through="userinteraction.FavoriteCity", related_name="users_favorite"
     )
+    notification = models.BooleanField(_("notification"), default=False)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []

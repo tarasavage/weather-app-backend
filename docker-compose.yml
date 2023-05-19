@@ -21,4 +21,33 @@ services:
     depends_on:
       - db
 
-  
+  redis:
+    image: "redis:alpine"
+
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: "celery -A wheather_service worker -l info"
+    depends_on:
+      - web
+      - redis
+      - db
+    restart: on-failure
+    env_file:
+      - .env
+
+  celery-beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: >
+      sh -c "python manage.py wait_for_db &&
+             celery -A wheather_service beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler"
+    depends_on:
+      - web
+      - redis
+      - db
+    restart: on-failure
+    env_file:
+      - .env

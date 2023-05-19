@@ -1,10 +1,15 @@
 from datetime import datetime
 from django.db import IntegrityError
-
+from django.shortcuts import get_object_or_404
 import requests
 
-from wheater.models import City, CurrentWeather, DailyWeather, HourlyWeather, Weather
-from django.shortcuts import get_object_or_404
+from wheater.models import (
+    City,
+    CurrentWeather,
+    DailyWeather,
+    HourlyWeather,
+    Weather
+)
 
 API_KEY = "5a1b11a7a00f6c06e792ed6bb1ee3cd2"
 
@@ -31,7 +36,8 @@ def get_response_from_api(url: str) -> dict | None:
                 return response.json()
             else:
                 print(
-                    f"Error: Request failed with status code " f"{response.status_code}"
+                    (f"Error: Request failed with "
+                     f"status code {response.status_code}")
                 )
     except requests.exceptions.RequestException as e:
         print(f"Error: {e}")
@@ -43,9 +49,11 @@ def save_obj_to_db(obj: City | Weather) -> None:
     try:
         obj.save()
     except IntegrityError as e:
-        print(f"IntegrityError occurred while saving object to the database: {e}")
+        print(f"IntegrityError occurred while"
+              f" saving object to the database: {e}")
     except Exception as e:
-        print(f"Error occurred while saving object to the database: {e}")
+        print(f"Error occurred while "
+              f"saving object to the database: {e}")
 
 
 def create_city(coords_response: dict) -> City | None:
@@ -101,7 +109,8 @@ def create_current_weather(city: City, response: dict) -> CurrentWeather:
 
     current_weather = CurrentWeather(
         city=city,
-        dt=datetime.utcfromtimestamp(get_nested_value(response, ["dt"], 0)).strftime(
+        dt=datetime.utcfromtimestamp(
+            get_nested_value(response, ["dt"], 0)).strftime(
             "%Y-%m-%d %H:%M:%S"
         ),
         temp=get_nested_value(response, ["main", "temp"], 20.37),
@@ -115,8 +124,12 @@ def create_current_weather(city: City, response: dict) -> CurrentWeather:
         wind_gust=get_nested_value(response, ["wind", "gust"]),
         rain_1h=get_nested_value(response, ["rain", "1h"]),
         snow_1h=get_nested_value(response, ["snow", "1h"]),
-        weather_id=get_nested_value(response, ["weather", 0, "id"], 501),
-        weather_main=get_nested_value(response, ["weather", 0, "main"], "Clouds"),
+        weather_id=get_nested_value(
+            response, ["weather", 0, "id"], 501
+        ),
+        weather_main=get_nested_value(
+            response, ["weather", 0, "main"], "Clouds"
+        ),
         weather_description=get_nested_value(
             response, ["weather", 0, "description"], "scattered clouds"
         ),
@@ -166,7 +179,9 @@ def create_daily_weather(city: City, response: dict) -> DailyWeather:
         wind_deg=get_nested_value(response, ["deg"], 220),
         wind_gust=get_nested_value(response, ["gust"]),
         weather_id=get_nested_value(response, ["weather", 0, "id"], 501),
-        weather_main=get_nested_value(response, ["weather", 0, "main"], "Clouds"),
+        weather_main=get_nested_value(
+            response, ["weather", 0, "main"], "Clouds"
+        ),
         weather_description=get_nested_value(
             response, ["weather", 0, "description"], "scattered clouds"
         ),
@@ -182,7 +197,9 @@ def create_daily_weather(city: City, response: dict) -> DailyWeather:
         feels_like_morn=get_nested_value(response, ["feels_like", "morn"], 20),
         feels_like_day=get_nested_value(response, ["feels_like", "day"], 20),
         feels_like_eve=get_nested_value(response, ["feels_like", "eve"], 20),
-        feels_like_night=get_nested_value(response, ["feels_like", "night"], 20),
+        feels_like_night=get_nested_value(
+            response, ["feels_like", "night"], 20
+        ),
         pop=response.get("pop", 0.5),
         rain=response.get("rain", None),
         snow=response.get("snow", None),
@@ -196,7 +213,7 @@ def scrape_daily_weather(city_name: str) -> list[DailyWeather] | None:
 
     url = (
         f"https://api.openweathermap.org/data/2.5/forecast/daily?"
-        f"lat={city.lat}&lon={city.lon}&cnt=7&appid={API_KEY}"
+        f"lat={city.lat}&lon={city.lon}&cnt=7&appid={API_KEY}&units=metric"
     )
 
     try:
@@ -239,7 +256,9 @@ def create_hourly_weather(city: City, response: dict) -> HourlyWeather:
         wind_deg=get_nested_value(response, ["deg"], 220),
         wind_gust=get_nested_value(response, ["gust"]),
         weather_id=get_nested_value(response, ["weather", 0, "id"], 501),
-        weather_main=get_nested_value(response, ["weather", 0, "main"], "Clouds"),
+        weather_main=get_nested_value(
+            response, ["weather", 0, "main"], "Clouds"
+        ),
         weather_description=get_nested_value(
             response, ["weather", 0, "description"], "scattered clouds"
         ),
@@ -264,7 +283,7 @@ def scrape_hourly_weather(city_name: str) -> list[HourlyWeather] | None:
 
     url = (
         f"https://pro.openweathermap.org/data/2.5/forecast/hourly?"
-        f"lat={city.lat}&lon={city.lon}&appid={API_KEY}"
+        f"lat={city.lat}&lon={city.lon}&appid={API_KEY}&units=metric"
     )
 
     try:
