@@ -145,7 +145,7 @@ def scrape_current_weather(city_name: str) -> CurrentWeather | None:
     url = (
         f"https://api.openweathermap.org/data/2.5/"
         f"weather?lat={city.lat}&lon={city.lon}"
-        f"&appid={API_KEY}&units=metric"
+        f"&appid={API_KEY}&units=metric&lang=ua"
     )
 
     try:
@@ -213,7 +213,8 @@ def scrape_daily_weather(city_name: str) -> list[DailyWeather] | None:
 
     url = (
         f"https://api.openweathermap.org/data/2.5/forecast/daily?"
-        f"lat={city.lat}&lon={city.lon}&cnt=7&appid={API_KEY}&units=metric"
+        f"lat={city.lat}&lon={city.lon}&cnt=10&appid={API_KEY}"
+        f"&units=metric&lang=ua"
     )
 
     try:
@@ -283,7 +284,8 @@ def scrape_hourly_weather(city_name: str) -> list[HourlyWeather] | None:
 
     url = (
         f"https://pro.openweathermap.org/data/2.5/forecast/hourly?"
-        f"lat={city.lat}&lon={city.lon}&appid={API_KEY}&units=metric"
+        f"lat={city.lat}&lon={city.lon}&appid={API_KEY}"
+        f"&units=metric&lang=ua&cnt=24"
     )
 
     try:

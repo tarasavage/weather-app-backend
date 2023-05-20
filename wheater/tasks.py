@@ -1,11 +1,18 @@
-from django.conf import settings
-from django.core.mail import send_mail
-from django.contrib.auth import get_user_model
-from celery import shared_task
-from django.db.models import Q
 from datetime import date
+from functools import wraps
 
-from wheater.models import DailyWeather
+from celery import shared_task
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.core.mail import send_mail
+from django.db.models import Q
+
+from wheater.models import City, DailyWeather
+from wheater.scraper import (
+    sync_current_weather_with_api,
+    sync_daily_weather_with_api,
+    sync_hourly_weather_with_api
+)
 
 
 @shared_task
@@ -42,3 +49,32 @@ def send_notification_emails() -> None:
             recipient_list=[user.email],
             fail_silently=True,
         )
+
+
+def fetch_cities_and_sync_weather_task(task_func):
+    @wraps(task_func)
+    def wrapper():
+        cities = City.objects.all()
+
+        for city in cities:
+            task_func(city.name)
+
+    return wrapper
+
+
+@shared_task
+@fetch_cities_and_sync_weather_task
+def run_scheduled_daily_scrape(city_name):
+    sync_daily_weather_with_api(city_name)
+
+
+@shared_task
+@fetch_cities_and_sync_weather_task
+def run_scheduled_hourly_scrape(city_name):
+    sync_hourly_weather_with_api(city_name)
+
+
+@shared_task
+@fetch_cities_and_sync_weather_task
+def run_scheduled_current_scrape(city_name):
+    sync_current_weather_with_api(city_name)
