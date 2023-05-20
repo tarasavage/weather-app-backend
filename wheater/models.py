@@ -13,7 +13,7 @@ class City(models.Model):
 
 class Weather(models.Model):
     city = models.ForeignKey(City, on_delete=models.CASCADE)
-    dt = models.DateTimeField(unique=True)
+    dt = models.DateTimeField()
     pressure = models.FloatField()
     humidity = models.FloatField()
     clouds = models.FloatField()
@@ -27,6 +27,7 @@ class Weather(models.Model):
 
     class Meta:
         abstract = True
+        unique_together = ("city", "dt")
 
 
 class CurrentWeather(Weather):
