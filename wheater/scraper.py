@@ -300,7 +300,7 @@ def scrape_hourly_weather(city_name: str) -> list[HourlyWeather] | None:
             save_obj_to_db(hourly_weather)
             forecast.append(hourly_weather)
 
-        return forecast
+        return forecast[::3]
 
     except Exception as e:
         print(f"Error: {e}")
