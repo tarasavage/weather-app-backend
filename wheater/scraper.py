@@ -1,5 +1,6 @@
 from datetime import datetime
 from django.db import IntegrityError
+from django.conf import settings
 from django.shortcuts import get_object_or_404
 import requests
 
@@ -11,7 +12,7 @@ from wheater.models import (
     Weather
 )
 
-API_KEY = "5a1b11a7a00f6c06e792ed6bb1ee3cd2"
+API_KEY = settings.API_KEY
 
 
 def get_nested_value(data, keys, default=None):
@@ -61,7 +62,7 @@ def create_city(coords_response: dict) -> City | None:
         coords_response = coords_response[0]
 
     city = City(
-        name=coords_response.get("name", "London"),
+        name=coords_response.get("local_names", {}).get("uk", "en"),
         lat=coords_response.get("lat", 51.5074),
         lon=coords_response.get("lon", -0.1278),
         country=coords_response.get("country", "GB"),
@@ -71,6 +72,13 @@ def create_city(coords_response: dict) -> City | None:
 
 
 def scrape_city(city_name: str) -> City | None:
+    url = (
+        f"http://api.openweathermap.org/geo/1.0/"
+        f"direct?q={city_name}&appid={API_KEY}"
+    )
+    coords_response = get_response_from_api(url)
+    city_name = coords_response[0].get("name", "London")
+
     try:
         city = get_object_or_404(City, name=city_name)
 
@@ -80,14 +88,7 @@ def scrape_city(city_name: str) -> City | None:
     except Exception as e:
         print(f"Error while accessing the database: {e}")
 
-    url = (
-        f"http://api.openweathermap.org/geo/1.0/"
-        f"direct?q={city_name}&appid={API_KEY}"
-    )
-
     try:
-        coords_response = get_response_from_api(url)
-
         if coords_response:
             city = create_city(coords_response)
 
